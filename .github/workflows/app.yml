@@ -1,0 +1,32 @@
+name: Compilar APK
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+        
+      - name: Instalar herramientas
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          pip3 install --user --upgrade buildozer cython virtualenv
+
+      - name: Configurar Buildozer
+        run: |
+          ~/.local/bin/buildozer init
+          sed -i 's/title = My Application/title = Tu Pronosticos/' buildozer.spec
+          sed -i 's/package.name = myapp/package.name = tupronosticos/' buildozer.spec
+          sed -i 's/requirements = python3,kivy/requirements = python3,kivy,requests,urllib3,certifi/' buildozer.spec
+
+      - name: Fabricar el APK
+        run: ~/.local/bin/buildozer -v android debug
+        
+      - name: Entregar archivo final
+        uses: actions/upload-artifact@v4
+        with:
+          name: App-TuPronosticos
+          path: bin/*.apk
